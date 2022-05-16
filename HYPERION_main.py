@@ -3,7 +3,7 @@
 Created on Mon Feb 14 11:01:10 2022
 
 HYPERION is an Open-Source code for calculating heat flux in axisymmetric
-divertors and limiters.
+divertors.
 
 It uses an implicit finite-difference method to estimate heat flux for given
 thermal properties and geometric coordinates.
@@ -195,30 +195,33 @@ for j in range(1, time_frames):
                 (k_carbon(toi) /
                  (rho*cp_temp(toi)))*(t/r**2)
 
-# boundary condition for heat insulation. Again it's only in y at the boundary,
-# not r bc time interval is small.
+# boundary condition for heat insulation.
     for i in range(2, y_nodes-1):
+        toi = temp_2d[i, 0, j-1]
         # left edge condition
         m[i*r_nodes, i*r_nodes - r_nodes] = - \
-            (k_carbon(temp_2d[i, 0, j-1]) /
-             (rho*cp_temp(temp_2d[i, 0, j-1])))*(t/y**2)
+            (k_carbon(toi) /
+             (rho*cp_temp(toi)))*(t/y**2)
         m[i*r_nodes, i*r_nodes + r_nodes] = - \
-            (k_carbon(temp_2d[i, 0, j-1]) /
-             (rho*cp_temp(temp_2d[i, 0, j-1])))*(t/y**2)
-        m[i*r_nodes, i*r_nodes] = 1 + 2 * \
-            (k_carbon(temp_2d[i, 0, j-1]) /
-             (rho*cp_temp(temp_2d[i, 0, j-1])))*(t/y**2)
+            (k_carbon(toi) /
+             (rho*cp_temp(toi)))*(t/y**2)
+        m[i*r_nodes, i*r_nodes] = 1 + (k_carbon(toi)/(
+            rho*cp_temp(toi)))*t*((2/y**2) + (2/r**2))
+        m[i*r_nodes, i*r_nodes + 1] = -2 * \
+            (k_carbon(toi)/(rho*cp_temp(toi)))*(t/r**2)
 
         # Right Edge Condition
+        toi = temp_2d[i, r_nodes-1, j-1]
         m[i*r_nodes + r_nodes - 1, i*r_nodes + r_nodes - 1 - r_nodes] = - \
-            (k_carbon(temp_2d[i, r_nodes-1, j-1]) /
-             (rho*cp_temp(temp_2d[i, r_nodes-1, j-1])))*(t/y**2)
+            (k_carbon(toi) /
+             (rho*cp_temp(toi)))*(t/y**2)
         m[i*r_nodes + r_nodes - 1, i*r_nodes + r_nodes - 1 + r_nodes] = - \
-            (k_carbon(temp_2d[i, r_nodes-1, j-1]) /
-             (rho*cp_temp(temp_2d[i, r_nodes-1, j-1])))*(t/y**2)
-        m[i*r_nodes + r_nodes - 1, i*r_nodes + r_nodes - 1] = 1 + 2 * \
-            (k_carbon(temp_2d[i, r_nodes-1, j-1]) /
-             (rho*cp_temp(temp_2d[i, r_nodes-1, j-1])))*(t/y**2)
+            (k_carbon(toi) /
+             (rho*cp_temp(toi)))*(t/y**2)
+        m[i*r_nodes + r_nodes - 1, i*r_nodes + r_nodes - 1] = 1 + (k_carbon(toi)/(
+            rho*cp_temp(toi)))*t*((2/y**2) + (2/r**2))
+        m[i*r_nodes + r_nodes - 1, i*r_nodes + r_nodes - 1 - 1] = -2 * \
+            (k_carbon(toi)/(rho*cp_temp(toi)))*(t/r**2)
 
     # heat conduction at the bottom
     for i in range(1, r_nodes-1):
@@ -404,7 +407,8 @@ plt.title('Surface Temperature Profile', weight='bold')
 
 plt.figure(3)
 plt.plot(t_plt, heatflux[r_dim]/1e6, 'k--')
-plt.title('Radial Heat Flux Profile @ R ={:.4f}m'.format(radius_m[r_dim]), weight='bold')
+plt.title(
+    'Radial Heat Flux Profile @ R ={:.4f}m'.format(radius_m[r_dim]), weight='bold')
 plt.xlabel('Time (s)', fontsize=14, weight='bold')
 plt.ylabel(r'Heat Flux $\mathbf{(MW/m^2)}$', fontsize=14, weight='bold')
 plt.xticks(fontsize=14)
@@ -415,7 +419,8 @@ plt.legend(loc='upper left')
 # the figure depending on your profile.
 plt.figure(4)
 plt.plot(radius_m, heatflux[:, t_dim], 'r')
-plt.title('Peak Heat Flux @ t={:.3f}s'.format(t_plt[t_dim]), fontsize=14, weight='bold')
+plt.title(
+    'Peak Heat Flux @ t={:.3f}s'.format(t_plt[t_dim]), fontsize=14, weight='bold')
 plt.text(0.80, .86*q_peak, 'P_div = {:.2f} MW'.format(p_div[t_dim]/1e6))
 plt.text(0.80, .77*q_peak, 'A_wet = {:.2f} $m^2$'.format(a_wet))
 plt.text(0.80, .687*q_peak, '$\lambda$_int = {:.3f} m'.format(lambda_int))
@@ -429,11 +434,11 @@ plt.ylabel('Heat Flux $(W/m^2)$', fontsize=14, weight='bold')
 fig5, ax1 = plt.subplots()
 ax2 = ax1.twinx()
 ax1.plot(t_plt, heatflux[r_dim], 'k--', label='Heat Flux')
-ax2.plot(t_plt,p_div/1e6,'g--', label='Deposited Power')
+ax2.plot(t_plt, p_div/1e6, 'g--', label='Deposited Power')
 plt.title('Profile @ R ={:.4f}m'.format(radius_m[r_dim]), weight='bold')
 ax1.set_xlabel('Time (s)')
 ax1.set_ylabel('Heat Flux $(W/m^2)$', fontsize=14, weight='bold')
-ax2.set_ylabel('Deposited Power (MW)',color='g', fontsize=14, weight='bold')
+ax2.set_ylabel('Deposited Power (MW)', color='g', fontsize=14, weight='bold')
 ax1.ticklabel_format(axis='y', scilimits=(6, 6))
 plt.xlim(t1, t2)
 plt.locator_params(axis='x', nbins=5)
