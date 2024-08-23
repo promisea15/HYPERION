@@ -26,8 +26,6 @@ import matplotlib.pyplot as plt
 from datetime import datetime
 from scipy.interpolate import interp1d
 from matplotlib.ticker import FormatStrFormatter
-import time
-startTime = time.time()
 
 # Files from IR data
 time_file = 'time132406.csv'
@@ -261,8 +259,35 @@ for i in range(r_nodes):
         k_avg = (k_carbon(temp_2d[0, i, j]) + k_carbon(temp_2d[1, i, j]))/2
         heatflux[i, j] = (temp_2d[0, i, j] - temp_2d[1, i, j]) * k_avg/(y/w)
 
-executionTime = (time.time() - startTime)
-print('Execution time in seconds: ' + str(executionTime))
+def integrate(y_vals, dx):  # y_vals is an array and dx is step_size
+    if (len(y_vals) - 1) % 2 == 0:  # Simpson's 1/3 Rule [Preferred] – even number of intervals (odd # of points)
+        i = 1
+        total = y_vals[0] + y_vals[-1]
+        for y in y_vals[1:-1]:
+            if i % 2 == 0:
+                total += 2 * y
+            else:
+                total += 4 * y
+            i += 1
+        return total * (dx / 3.0)
+    elif (len(y_vals) - 1) % 3 == 0:  # Simpson's 3/8 Rule – number of intervals is divisible by 3
+        total = y_vals[0] + y_vals[-1]
+        for y in y_vals[1:-1]:
+            total += 3 * y
+        return total * (3 * dx / 8)
+    else:  # Combo of 1/3 & 3/8 Rules for odd number of intervals
+        total1 = (3 * dx / 8) * (y_vals[0] + 3*y_vals[1] + 3*y_vals[2] + y_vals[3])
+        total2 = y_vals[4] + y_vals[-1]  # Simpson's 1/3 Rule
+        i = 1
+        for y in y_vals[5:-1]:
+            if i % 2 == 0:
+                total2 += 2 * y
+            else:
+                total2 += 4 * y
+            i += 1
+        total2 = total2 * (dx / 3.0)
+        total = total1 + total2
+        return total
 
 
 
